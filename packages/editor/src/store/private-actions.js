@@ -163,6 +163,7 @@ export const saveDirtyEntities =
 		close?.( entitiesToSave );
 		const siteItemsToSave = [];
 		const pendingSavedRecords = [];
+		const pendingSavedRecordEntities = [];
 		entitiesToSave.forEach( ( { kind, name, key, property } ) => {
 			if ( 'root' === kind && 'site' === name ) {
 				siteItemsToSave.push( property );
@@ -186,6 +187,7 @@ export const saveDirtyEntities =
 						.dispatch( coreStore )
 						.saveEditedEntityRecord( kind, name, key )
 				);
+				pendingSavedRecordEntities.push( { kind, name, key } );
 			}
 		} );
 		if ( siteItemsToSave.length ) {
@@ -199,6 +201,11 @@ export const saveDirtyEntities =
 						siteItemsToSave
 					)
 			);
+			pendingSavedRecordEntities.push( {
+				kind: 'root',
+				name: 'site',
+				key: undefined,
+			} );
 		}
 		registry
 			.dispatch( blockEditorStore )
@@ -211,9 +218,35 @@ export const saveDirtyEntities =
 				if (
 					values.some( ( value ) => typeof value === 'undefined' )
 				) {
+					// Find the first failed save and retrieve its error from
+					// the store so we can surface the server's own message
+					// (e.g. "The CSS must not contain </style>.") rather than
+					// a generic fallback.
+					const failedIndex = values.findIndex(
+						( value ) => typeof value === 'undefined'
+					);
+					const failedEntity =
+						pendingSavedRecordEntities[ failedIndex ];
+					const error = failedEntity
+						? registry
+								.select( coreStore )
+								.getLastEntitySaveError(
+									failedEntity.kind,
+									failedEntity.name,
+									failedEntity.key
+								)
+						: undefined;
 					registry
 						.dispatch( noticesStore )
-						.createErrorNotice( __( 'Saving failed.' ) );
+						.createErrorNotice(
+							decodeEntities(
+								error?.message || __( 'Saving failed.' )
+							),
+							{
+								type: 'snackbar',
+								id: saveNoticeId,
+							}
+						);
 				} else {
 					registry
 						.dispatch( noticesStore )
@@ -237,7 +270,13 @@ export const saveDirtyEntities =
 				registry
 					.dispatch( noticesStore )
 					.createErrorNotice(
-						`${ __( 'Saving failed.' ) } ${ error }`
+						decodeEntities(
+							error?.message || __( 'Saving failed.' )
+						),
+						{
+							type: 'snackbar',
+							id: saveNoticeId,
+						}
 					)
 			);
 	};
