@@ -66,6 +66,18 @@ function useHasDuotoneControl( settings ) {
 	);
 }
 
+export function getCustomDuotoneFlags( settings, colorPalette ) {
+	const disableCustomColors = ! settings?.color?.custom;
+	const disableCustomDuotone =
+		! settings?.color?.customDuotone ||
+		( colorPalette?.length === 0 && disableCustomColors );
+
+	return {
+		disableCustomColors,
+		disableCustomDuotone,
+	};
+}
+
 function FiltersToolsPanel( {
 	resetAllFilter,
 	onChange,
@@ -186,6 +198,10 @@ export default function FiltersPanel( {
 		presetSetting: 'palette',
 		defaultSetting: 'defaultPalette',
 	} );
+	const { disableCustomColors, disableCustomDuotone } = getCustomDuotoneFlags(
+		settings,
+		colorPalette
+	);
 	const duotone = decodeValue( inheritedValue?.filter?.duotone );
 	const setDuotone = ( newValue ) => {
 		const duotonePreset = duotonePalette.find( ( { colors } ) => {
@@ -241,9 +257,12 @@ export default function FiltersPanel( {
 									<DuotonePicker
 										colorPalette={ colorPalette }
 										duotonePalette={ duotonePalette }
-										// TODO: Re-enable both when custom colors are supported for block-level styles.
-										disableCustomColors
-										disableCustomDuotone
+										disableCustomColors={
+											disableCustomColors
+										}
+										disableCustomDuotone={
+											disableCustomDuotone
+										}
 										value={ duotone }
 										onChange={ setDuotone }
 									/>
