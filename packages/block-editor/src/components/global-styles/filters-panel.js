@@ -66,9 +66,14 @@ function useHasDuotoneControl( settings ) {
 	);
 }
 
-export function getCustomDuotoneFlags( settings, colorPalette ) {
+export function getCustomDuotoneFlags(
+	settings,
+	colorPalette,
+	enableCustomDuotone = true
+) {
 	const disableCustomColors = ! settings?.color?.custom;
 	const disableCustomDuotone =
+		! enableCustomDuotone ||
 		! settings?.color?.customDuotone ||
 		( colorPalette?.length === 0 && disableCustomColors );
 
@@ -184,6 +189,7 @@ export default function FiltersPanel( {
 	settings,
 	panelId,
 	defaultControls = DEFAULT_CONTROLS,
+	enableCustomDuotone = true,
 } ) {
 	const decodeValue = ( rawValue ) =>
 		getValueFromVariable( { settings }, '', rawValue );
@@ -200,7 +206,8 @@ export default function FiltersPanel( {
 	} );
 	const { disableCustomColors, disableCustomDuotone } = getCustomDuotoneFlags(
 		settings,
-		colorPalette
+		colorPalette,
+		enableCustomDuotone
 	);
 	const duotone = decodeValue( inheritedValue?.filter?.duotone );
 	const setDuotone = ( newValue ) => {
